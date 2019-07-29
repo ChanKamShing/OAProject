@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cjs.dao.UserDao">
+    <resultMap id="userResultMap" type="user">
+        <id property="userId" column="user_id"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="sex" column="sex"/>
+        <result property="email" column="email"/>
+        <result property="tel" column="tel"/>
+        <result property="phone" column="phone"/>
+        <result property="qqNum" column="qq_num"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="status" column="status"/>
+        <result property="modifyDate" column="modify_date"/>
+        <result property="createDate" column="create_date"/>
+        <result property="checkDate" column="check_date"/>
+        <association property="dept" javaType="dept">
+            <id property="id" column="dept_id"/>
+            <result property="name" column="dept_name"/>
+            <result property="remark" column="dept_remark"/>
+        </association>
+        <association property="job" javaType="job">
+            <id property="code" column="job_code"/>
+            <result property="name" column="job_name"/>
+            <result property="remark" column="job_remark"/>
+        </association>
+        <association property="modifier" javaType="user">
+            <id property="userId" column="modifier_id"/>
+            <result property="name" column="modifier_name"/>
+        </association>
+        <association property="creater" javaType="user">
+            <id property="userId" column="creater_id"/>
+            <result property="name" column="creater_name"/>
+        </association>
+        <association property="checker" javaType="user">
+            <id property="userId" column="checker_id"/>
+            <result property="name" column="checker_name"/>
+        </association>
+        <collection property="roles" javaType="ArrayList" column="user_id"
+                    select="com.cjs.dao.RoleDao.selectRolesByUserId" fetchType="lazy">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+            <result property="remark" column="remark"/>
+        </collection>
+    </resultMap>
+
+    <sql id="getUserId">
+        select u.user_id from oa_id_user as u
+          inner join oa_id_user_role as ur on ur.user_id = u.user_id
+          inner join oa_id_role as r on r.id = ur.role_id
+          where r.id = #{id}
+    </sql>
+
+    <sql id="userColumns">
+        u.user_id,
+        u.password,
+        u.name,
+        u.sex,
+        u.email,
+        u.tel,
+        u.phone,
+        u.qq_num,
+        u.question,
+        u.answer,
+        u.status,
+        u.create_date,
+        u.modify_date,
+        u.check_date
+    </sql>
+
+    <select id="getRolesUsers" parameterType="int">
+        select u2.user_id
+        from oa_id_user as u2
+        where user.user_id not in
+        (<include refid="getUserId"/> )
+    </select>
+
+    <select id="findRoleUsers" parameterType="int">
+        <include refid="getUserId"/>
+    </select>
+
+    <select id="getUserById" parameterType="string" resultMap="userResultMap">
+        select <include refid="userColumns"/>,
+            dept.id as dept_id,
+            dept.name as dept_name,
+            dept.remark as dept_remark,
+            job.code as job_code,
+            job.name as job_name,
+            job.remark as job_remark,
+            modifier.user_id as modifier_id,
+            modifier.name as modifier_name,
+            creater.user_id as creater_id,
+            creater.name as creater_name,
+            checker.user_id as checker_id,
+            checker.name as checker_name
+        from oa_id_user as u,
+            oa_id_dept as dept,
+            oa_id_job as job,
+            oa_id_user as modifier,
+            oa_id_user as creater,
+            oa_id_user as checker
+        where u.user_id = #{user_id}
+        and u.dept_id = dept.id
+        and u.job_code = job.code
+        and u.modifier = modifier.user_id
+        and u.creater = creater.user_id
+        and u.checker = checker.user_id
+    </select>
+
+    <select id="findUsersByPage" resultMap="userResultMap">
+        select <include refid="userColumns"/>,
+        dept.id as dept_id,
+        dept.name as dept_name,
+        dept.remark as dept_remark,
+        job.code as job_code,
+        job.name as job_name,
+        job.remark as job_remark,
+        modifier.user_id as modifier_id,
+        modifier.name as modifier_name,
+        creater.user_id as creater_id,
+        creater.name as creater_name,
+        checker.user_id as checker_id,
+        checker.name as checker_name
+        from oa_id_user as u,
+        oa_id_dept as dept,
+        oa_id_job as job,
+        oa_id_user as modifier,
+        oa_id_user as creater,
+        oa_id_user as checker
+        where u.dept_id = dept.id
+        and u.job_code = job.code
+        and u.modifier = modifier.user_id
+        and u.creater = creater.user_id
+        and u.checker = checker.user_id
+        and u.user_id in
+        <foreach collection="list" item="userId" index="index"
+                 open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        <if test="pageModel != null">
+            limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+        </if>
+    </select>
+
+    <select id="findNotUsersByPage" resultMap="userResultMap">
+        select <include refid="userColumns"/>,
+        dept.id as dept_id,
+        dept.name as dept_name,
+        dept.remark as dept_remark,
+        job.code as job_code,
+        job.name as job_name,
+        job.remark as job_remark,
+        modifier.user_id as modifier_id,
+        modifier.name as modifier_name,
+        creater.user_id as creater_id,
+        creater.name as creater_name,
+        checker.user_id as checker_id,
+        checker.name as checker_name
+        from oa_id_user as u,
+        oa_id_dept as dept,
+        oa_id_job as job,
+        oa_id_user as modifier,
+        oa_id_user as creater,
+        oa_id_user as checker
+        where u.dept_id = dept.id
+        and u.job_code = job.code
+        and u.modifier = modifier.user_id
+        and u.creater = creater.user_id
+        and u.checker = checker.user_id
+        and u.user_id not in
+        <foreach collection="list" item="userId" index="index"
+                 open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        <if test="pageModel != null">
+            limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+        </if>
+    </select>
+
+    <update id="updateUser" parameterType="user">
+        update oa_id_user
+        <set>
+            modify_date = #{user.modify_date},
+            <if test="user.modifier != null">modifier = #{user.modifier.userId},</if>
+            <if test="user.name != null">name = #{user.name},</if>
+            <if test="user.password != null">password = #{user.password}</if>
+            <if test="user.email != null">email = #{user.email},</if>
+            <if test="user.sex != null">sex = #{user.sex},</if>
+            <if test="user.tel != null">tel = #{user.tel},</if>
+            <if test="user.phone != null">phone = #{user.phone},</if>
+            <if test="user.question != null">question = #{user.question},</if>
+            <if test="user.answer != null">answer = #{user.answer},</if>
+            <if test="user.qqNum != null">qq_num = #{user.qqNum},</if>
+            <if test="user.dept != null">dept_id = #{user.dept.id},</if>
+            <if test="user.job != null">job_code = #{user.job.code},</if>
+            <if test="user.status != null">status = #{user.status}</if>
+        </set>
+        where user_id = #{user.userId}
+    </update>
+
+    <select id="countByUser" parameterType="user">
+        select count(*) from oa_id_user
+        where 1 = 1
+        <if test="user.name != null">
+            and name like #{user.name}
+        </if>
+        <if test="user.phone != null">
+            and phone like #{user.phone}
+        </if>
+        <if test="user.dept !=null and user.dept.id != null and user.dept.id != 0">
+            and dept_id = #{user.dept.id}
+        </if>
+        <if test="user.job != null and user.job.code != null and user.job.code != '0'">
+            and job_code = #{user.job.code}
+        </if>
+    </select>
+
+    <select id="countByUserIds" parameterType="list">
+        select count(*) from oa_id_user
+        where user_id in
+        <foreach collection="list" item="userId" index="index"
+                 open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <select id="countNotByUserIds" parameterType="list">
+        select count(*) from oa_id_user
+        where user_id not in
+        <foreach collection="list" item="userId" index="index"
+                 open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <select id="selectUsersByPage" resultMap="userResultMap">
+        select <include refid="userColumns"/>,
+        dept.id as dept_id,
+        dept.name as dept_name,
+        dept.remark as dept_remark,
+        job.code as job_code,
+        job.name as job_name,
+        job.remark as job_remark,
+        modifier.user_id as modifier_id,
+        modifier.name as modifier_name,
+        creater.user_id as creater_id,
+        creater.name as creater_name,
+        checker.user_id as checker_id,
+        checker.name as checker_name
+        from oa_id_user as u,
+        oa_id_dept as dept,
+        oa_id_job as job,
+        oa_id_user as modifier,
+        oa_id_user as creater,
+        oa_id_user as checker
+        where 1 = 1
+        <if test="user.name != null">
+            and u.name like #{user.name}
+        </if>
+        <if test="user.phone != null">
+            and u.phone like #{user.phone}
+        </if>
+        <if test="user.dept !=null and user.dept.id != null and user.dept.id != 0">
+            and u.dept_id = #{user.dept.id}
+        </if>
+        <if test="user.job != null and user.job.code != null and user.job.code != '0'">
+            and u.job_code = #{user.job.code}
+        </if>
+        and u.dept_id = dept.id
+        and u.job_code = job.code
+        and u.modifier = modifier.user_id
+        and u.creater = creater.user_id
+        and u.checker = checker.user_id
+        <if test="pageModel != null">
+            limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+        </if>
+    </select>
+
+    <delete id="deleteUserBatch">
+        delete from oa_id_user
+        where user_id in
+        <foreach collection="list" item="userId" index="index"
+                 open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <insert id="addUser" parameterType="user">
+        insert into oa_id_user(
+        user_id,
+        password,
+        name,
+        sex,
+        email,
+        tel,
+        phone,
+        qq_num,
+        question,
+        answer,
+        status,
+        create_date,
+        modify_date,
+        check_date,
+        creater,
+        modifier,
+        checker,
+        dept_id,
+        job_code)
+        values (#{user.userId},
+        #{user.password},
+        #{user.name},
+        #{user.sex},
+        #{user.email},
+        #{user.tel},
+        #{user.phone},
+        #{user.qqNum},
+        #{user.question},
+        #{user.answer},
+        #{user.status},
+        #{user.createDate},
+        #{user.modifyDate},
+        #{user.checkDate},
+        #{user.creater},
+        #{user.modifier},
+        #{user.checker},
+        #{user.dept.id},
+        #{user.dept.code})
+    </insert>
+
+    <insert id="addRoleUser">
+        insert into oa_id_user_role(role_id, user_id)
+        values
+        <foreach collection="list" item="userId" separator=",">
+            (#{roleId},#{userId})
+        </foreach>
+    </insert>
+
+    <delete id="removeRoleUser">
+        delete from oa_id_user_role
+        where role_id = #{roleId}
+        and user_id in
+        <foreach collection="list" item="userId"
+                 open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+</mapper>

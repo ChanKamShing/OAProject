@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../static/resources/bootstrap/css/bootstrap.min.css">
+    <script src="../static/resources/jquery/jquery-1.11.0.min.js"></script>
+
+    <script type="text/javascript">
+        document.getElementById('pager_jump_btn').onclick = function () {
+            var page_size = document.getElementById('pager_jump_page_size').value;
+            if (!/^[1-9]\\d*$/.test(page_size) || page_size < 1 || page_size > this.totalPage) {
+                alert('请输入[1~this.totalPage]之间的页码！');
+            } else {
+                var submit_url = 'this.submitUrl';
+                window.location = submit_url.replace('TAG', page_size);
+            }
+        }
+    </script>
+</head>
+<body>
+<li><a style="background-color: #d4d4d4;" href="#">总共<font color="red">0</font>条记录，当前显示0-0条记录</a>&nbsp;</li>
+<li class="active"><a href="#"></a></li>
+<li class="active"><a href=""></a></li>
+<li><a href="#">...</a></li>
+</body>
+</html>

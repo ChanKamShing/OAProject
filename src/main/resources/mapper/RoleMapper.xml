@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cjs.dao.RoleDao">
+    <resultMap id="roleResultMap" type="role">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="remark" column="remark"/>
+        <result property="createDate" column="create_date"/>
+        <result property="modifyDate" column="modify_date"/>
+        <association property="modifier" javaType="user">
+            <id property="userId" column="modifier_user_id"/>
+            <result property="password" column="modifier_password"/>
+            <result property="name" column="modifier_name"/>
+            <result property="sex" column="modifier_sex"/>
+        </association>
+        <association property="creater" javaType="user">
+            <id property="userId" column="creater_user_id"/>
+            <result property="password" column="creater_password"/>
+            <result property="name" column="creater_name"/>
+            <result property="sex" column="creater_sex"/>
+        </association>
+    </resultMap>
+
+    <sql id="selectRole">
+        select r.*,
+            modifier.user_id as modifier_user_id,
+            modifier.password as modifier_password,
+            modifier.name as modifier_name,
+            modifier.sex as modifier_sex,
+            creater.user_id as creater_user_id,
+            creater.name as creater_name,
+            creater.password as creater_password,
+            creater.sex as creater_sex
+        from oa_id_role as r, oa_id_user as modifier, oa_id_user as creater
+        where modifier.user_id = r.modifier
+        and creater.user_id = r.creater
+    </sql>
+
+    <select id="selectRolesByUserId" parameterType="string">
+        select role.id, role.name as role_name, role.remark as role_remark
+        from oa_id_role as role
+        where role.id = (
+        select ur.role_id from oa_id_user_role ur
+        where ur.user_id = #{userId}
+        )
+    </select>
+
+    <select id="findRolesByPage" resultMap="roleResultMap">
+        <include refid="selectRole"/>
+        order by r.id desc
+        limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+    </select>
+
+    <select id="countAllRoles" resultType="int">
+        select count(*) from oa_id_role
+    </select>
+
+    <insert id="addRole" parameterType="role">
+        insert into oa_id_role(name,remark,creater,create_date,modifier,modify_date)
+        values(
+        #{role.name},
+        #{role.remark},
+        #{role.creater.userId},
+        #{role.createDate},
+        #{role.modifier.userId},
+        #{role.modifyDate}
+        )
+    </insert>
+
+    <delete id="deleteRolesBtach" parameterType="list">
+        delete from oa_id_role
+        where id in
+        <foreach collection="list" item="id" index="index"
+                 open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getRoleById" parameterType="int" resultMap="roleResultMap">
+        <include refid="selectRole"/>
+        and r.id = #{id}
+    </select>
+
+    <update id="updateRole" parameterType="role">
+        update oa_id_role
+        set
+        name = #{role.name},
+        remark = #{role.remark},
+        modifier = #{role.modifier.userId},
+        modify_date = #{role.modifyDate}
+        where id = #{role.id}
+    </update>
+</mapper>

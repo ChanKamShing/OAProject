@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cjs.dao.PopeDomDao">
+    <sql id="getRoleId">
+        select role.id from oa_id_role as role
+            inner join oa_id_user_role as ur on role.id = ur.role_id
+            inner join oa_id_user as u on ur.user_id = u.user_id
+            where u.user_id = #{userId}
+    </sql>
+
+    <select id="findByIdAndParentCode">
+        select popedom.opera_code
+        from oa_id_popedom as popedom
+        where popedom.role_id = #{id}
+        and popedom.module_code = #{parentCode}
+    </select>
+
+    <delete id="setByIdAndParentCode">
+        delete from oa_id_popedom as p
+        where p.role_id = #{id}
+        and p.module_code = #{parentCode}
+    </delete>
+
+    <select id="getUserPopeDomModuleCodes" parameterType="string" resultType="string">
+        select distinct popedom.module_code from oa_id_popedom as popedom
+        where popedom.role_id
+        in (<include refid="getRoleId"/>)
+        order by popedom.module_code asc
+    </select>
+
+    <select id="getUserPopeDomOperasCodes" parameterType="string" resultType="string">
+        select distinct popedom.opera_code from oa_id_popedom as popedom
+        where popedom.role_id
+        in (<include refid="getRoleId"/>)
+        order by popedom.opera_code asc
+    </select>
+
+    <insert id="addPopedomBatch">
+        insert into oa_id_popedom(create_date, creater, module_code, opera_code, role_id)
+        values
+        <foreach collection="list" item="popedom" index="index" separator=",">
+            (
+            #{popedom.createDate},
+            #{popedom.creater.userId},
+            #{popedom.module.code},
+            #{popedom.opera.code},
+            #{popedom.role.id}
+            )
+        </foreach>
+    </insert>
+</mapper>

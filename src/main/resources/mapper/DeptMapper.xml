@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cjs.dao.DeptDao">
+    <resultMap id="deptResultMap" type="dept">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="remark" column="remark"/>
+        <result property="modifyDate" column="modify_date"/>
+        <result property="createDate" column="create_date"/>
+        <association property="modifier" javaType="user">
+            <id property="userId" column="modifier_user_id"/>
+            <result property="password" column="modifier_password"/>
+            <result property="name" column="modifier_name"/>
+            <result property="sex" column="modifier_sex"/>
+        </association>
+        <association property="creater" javaType="user">
+            <id property="userId" column="creater_user_id"/>
+            <result property="password" column="creater_password"/>
+            <result property="name" column="creater_name"/>
+            <result property="sex" column="creater_sex"/>
+        </association>
+    </resultMap>
+
+    <select id="findDepts">
+        select p.id, p.name from oa_id_dept as p
+    </select>
+
+    <select id="getAllDepts">
+        select dpet.*,
+            modifier.user_id as modifier_user_id,
+            modifier.password as modifier_password,
+            modifier.name as modifier_name,
+            modifier.sex as modifier_sex,
+            creater.user_id as creater_user_id,
+            creater.name as creater_name,
+            creater.password as creater_password,
+            creater.sex as creater_sex
+        from oa_id_dept as dept, oa_id_user as modifier, oa_id_user as creater
+        where modifier.user_id = dept.modifier
+        and creater.user_id = dept.creater
+    </select>
+</mapper>
